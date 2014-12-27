@@ -44,6 +44,7 @@ class Server(object):
   The server class to practice BSD sockets.
   """
 
+
   def __init__(self):
     # Init a command queue
     self.cmd_q = []
@@ -51,7 +52,9 @@ class Server(object):
     # Init the event dict
     self.event_funcs = {}
 
-    self.sock_name = "/tmp/server_socket"
+    self.rx_socket = socket.socket( socket.AF_UNIX, socket.SOCK_DGRAM )
+    self.rx_endpoint = "/tmp/server_socket"
+    self.tx_endpoint = "/tmp/client_socket"
 
 
   def enqueue_cmd(self, cmd):
@@ -87,9 +90,10 @@ class Server(object):
     """
 
     print "Shutting down."
-    self.sock.close()
-    os.remove( self.sock_name )
+    self.rx_socket.close()
+    os.remove( self.rx_endpoint )
     exit(0)
+
 
   def print_event(self, args=None):
     """
@@ -98,32 +102,30 @@ class Server(object):
     print args
 
 
-  def connect_socket(self):
+  def connect_rx(self):
     """
-    Connects server app to a local socket. 
+    Connects this app to it's rx socket.
     """
-
 
     # Socket already in use will return socket.error(98)
     # Get rid of it before trying to connect.
     # Note: must check for 'exists' no 'isfile' because sockets
     #       are not "files".
-    if op.exists( self.sock_name ):
-      os.remove( self.sock_name )
+    if op.exists( self.rx_endpoint ):
+      os.remove( self.rx_endpoint )
 
     # Set the socket to non-blocking
-    self.sock = socket.socket( socket.AF_UNIX, socket.SOCK_DGRAM )
-    self.sock.setblocking(0)
+    self.rx_socket = socket.socket( socket.AF_UNIX, socket.SOCK_DGRAM )
+    self.rx_socket.setblocking(0)
 
     try:
-      self.sock.bind( self.sock_name )
+      self.rx_socket.bind( self.rx_endpoint )
     except Exception as e:
       print e.args
-      print "Could not connect to socket: %s" % self.sock_name
+      print "Could not connect to socket: %s" % self.rx_endpoint
       exit(1)
 
 
-  # This needs to become a thread
   def listen(self):
     """
     Listen to the socket for incoming data.
@@ -136,7 +138,7 @@ class Server(object):
     # Since the socket is non-blocking, handle the 
     # "Resource temporarily unavailable" exception.
     try:
-      raw_data = self.sock.recv(4096)
+      raw_data = self.rx_socket.recv(4096)
 
     except socket.error as err:
       if err.args[0] == 11:
@@ -180,6 +182,7 @@ class Server(object):
     elif cmd in self.event_funcs:
       self.event_funcs[cmd]()
 
+
   def run(self):
     """
     Main executive for the server.
@@ -198,7 +201,8 @@ class Server(object):
 
       self.register_event("quit_cmd", self.quit_event)
       self.register_event("print_cmd", self.print_event)
-      self.connect_socket()
+      self.register_event("req_cmd", self.send_data)
+      self.connect_rx()
     elif sys.argv[1] == 'stop':
       if os.path.exists('/tmp/daemon.pid'):
         pidFile = open('/tmp/daemon.pid', 'r')
@@ -215,6 +219,7 @@ class Server(object):
     while True:
       self.listen() 
       self.process_cmds()
+
 
   def daemonize( self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     #
@@ -286,6 +291,12 @@ class Server(object):
       exit(0)
   
     signal.signal(signal.SIGTERM, sigterm_handler)
+
+
+  def send_data(self):
+    self.tx_socket = socket.socket( socket.AF_UNIX, socket.SOCK_DGRAM )
+    self.tx_socket.connect( self.tx_endpoint )
+    self.tx_socket.send("Hello World")
 
 
 if __name__ == "__main__":
