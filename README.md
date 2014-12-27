@@ -1,4 +1,4 @@
 python_examples
 ===============
 
-Examples code written in Python
+This repo contains small snippets of code or programs written in Python.
