@@ -48,8 +48,8 @@ class Server(object):
     # Init a command queue
     self.cmd_q = []
 
-    # Init the callback dict
-    self.cb_funcs = {}
+    # Init the event dict
+    self.event_funcs = {}
 
     self.sock_name = "/tmp/server_socket"
 
@@ -74,16 +74,16 @@ class Server(object):
     return self.cmd_q.pop(0)
 
 
-  def register_cb(self, name, func):
+  def register_event(self, name, func):
     """
-    Registers callback functions. 
+    Registers event handler functions. 
     """
-    self.cb_funcs[name] = func
+    self.event_funcs[name] = func
 
 
-  def quit_cb(self):
+  def quit_event(self):
     """
-    Callback to handle the "quit" command.
+    Event handler to handle the "quit" command.
     """
 
     print "Shutting down."
@@ -91,9 +91,9 @@ class Server(object):
     os.remove( self.sock_name )
     exit(0)
 
-  def print_cb(self, args=None):
+  def print_event(self, args=None):
     """
-    Test callback for multi-argument commands.
+    Test event handler for multi-argument commands.
     """
     print args
 
@@ -160,7 +160,7 @@ class Server(object):
     # If command is no-argument, then args will be the empty list.
     args = data[1:]
 
-    if cmd in self.cb_funcs:
+    if cmd in self.event_funcs:
       self.enqueue_cmd( (cmd, args) )
 
 
@@ -174,11 +174,11 @@ class Server(object):
     cmd = element[0]
     args = element[1][:]
 
-    if cmd in self.cb_funcs and args:
+    if cmd in self.event_funcs and args:
       for arg in args:
-        self.cb_funcs[cmd]( arg )
-    elif cmd in self.cb_funcs:
-      self.cb_funcs[cmd]()
+        self.event_funcs[cmd]( arg )
+    elif cmd in self.event_funcs:
+      self.event_funcs[cmd]()
 
   def run(self):
     """
@@ -196,8 +196,8 @@ class Server(object):
         print err.args
         exit(1)
 
-      self.register_cb("quit_cmd", self.quit_cb)
-      self.register_cb("print_cmd", self.print_cb)
+      self.register_event("quit_cmd", self.quit_event)
+      self.register_event("print_cmd", self.print_event)
       self.connect_socket()
     elif sys.argv[1] == 'stop':
       if os.path.exists('/tmp/daemon.pid'):
