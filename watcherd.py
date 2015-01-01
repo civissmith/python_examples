@@ -108,7 +108,7 @@ def daemonize( tgt, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 def watcher( directory='.' ):
   """
   This function scans a directory looking for specific file extensions. If files
-  match it's known extensions, it renames them. Remember kiddos, with great
+  match its known extensions, it renames them. Remember kiddos, with great
   power comes great responsibility...
   """
 
