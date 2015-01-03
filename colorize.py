@@ -15,6 +15,26 @@
 ################################################################################
 import sys
 
+# Define some names to make
+BOLD       = 'bold'
+FAINT      = 'faint'
+ITALIC     = 'italic'
+CROSSED    = 'crossed'
+ITALICS    = 'italic'
+NEGATIVE   = 'negative'
+CONCEALED  = 'concealed'
+UNDERLINE  = 'underline'
+UNDERLINED = 'underline'
+
+RED     = 'red'
+BLUE    = 'blue'
+CYAN    = 'cyan'
+GREEN   = 'green'
+BLACK   = 'black'
+WHITE   = 'white'
+YELLOW  = 'yellow'
+MAGENTA = 'magenta'
+
 def print_line( text, bg=None, fg=None, st=None, eol='\n'):
   """
   Print a line of text. Optionally change the background (bg) color, foreground 
