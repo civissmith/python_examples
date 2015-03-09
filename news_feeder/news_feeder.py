@@ -10,6 +10,9 @@
 #
 # @Purpose: Downloads news articles.
 #
+# # To-Do List:
+# TODO 1.) Parameterize the 'address' variables for each function.
+# TODO 2.) Add support to grab interesting articles and capture their story.
 #
 ################################################################################
 import re
@@ -18,10 +21,12 @@ import urllib.request as ur
 #                                 Page Readers                                 #
 ################################################################################
 
+
 def get_washington_post():
    """
    Download info from the Washington Post.
    """
+
    address = "http://www.washingtonpost.com/national" 
    #address = "http://www.washingtonpost.com/business/technology" 
    raw_page = read_web_page( address )
@@ -33,6 +38,7 @@ def get_washington_post():
    #<span class="blog-headline"> </span><br/> - Blog top story
    links_found = re.findall( '<h2 class="(no-left|headline )">(.*?)</h2>', web_page )
 
+   # Assemble the headline and normal links into a single list.
    links = [ each[1] for each in links_found ]
    for link in links:
        content_found   = re.search( '<a href="(.*?)">(.*)</a>', link )
@@ -55,6 +61,7 @@ def get_washington_post():
            print( url )
            print( paragraph )
            print( )
+
 
 def get_reuters():
    """
@@ -149,3 +156,5 @@ def read_web_page( url ):
 
 if __name__ == "__main__":
    get_washington_post()
+   get_reuters()
+   get_dailymail()
