@@ -73,7 +73,8 @@ def get_dailymail():
    """
 
    # Daily Mail: "articletext" denotes article block with description.
-   raw_page = read_web_page("http://www.dailymail.co.uk/ushome/index.html")
+   address = "http://www.dailymail.co.uk"
+   raw_page = read_web_page( address )
 
    web_page = condense_data( raw_page )
 
@@ -90,9 +91,9 @@ def get_dailymail():
            # Only save links with descriptions.
            if address_found and paragraph_found:
 
-               address = "http://www.dailymail.co.uk"
-               address += address_found.group(1).replace('" class="js-link-clickable','') 
-               print( address )
+               url = "http://www.dailymail.co.uk"
+               url += address_found.group(1).replace('" class="js-link-clickable','') 
+               print( url )
 
                if paragraph_found.group(1):
                    print( paragraph_found.group(1).replace('<span class="tag-new">NEW</span>','' )) 
