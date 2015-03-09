@@ -18,23 +18,43 @@ import urllib.request as ur
 #                                 Page Readers                                 #
 ################################################################################
 
-def  get_washpost():
-  
-   page = ur.urlopen('http://www.washingtonpost.com/national')
-   data = page.readlines()
+def get_washington_post():
+   """
+   Download info from the Washington Post.
+   """
+   address = "http://www.washingtonpost.com/national" 
+   #address = "http://www.washingtonpost.com/business/technology" 
+   raw_page = read_web_page( address )
 
-   lines = [ each.decode('utf-8') for each in data ]
+   web_page = condense_data( raw_page )
 
-   html = open('page.html', 'w')
-   for line in lines:
+   # Search for the articles.
+   #<h2 class="no-left"> </h2> - Article and paragraph data.
+   #<span class="blog-headline"> </span><br/> - Blog top story
+   links_found = re.findall( '<h2 class="(no-left|headline )">(.*?)</h2>', web_page )
 
-       # With Washington Post, the 'h2 class' tags on the sub-pages have the
-       # links to the stories. Paths can be absolute (http://) or relative
-       # (/business).
-       # If the link is relative, prepend 'http://www.washingtonpost.com'.
-       if "h2 class" in line.lower():
-           html.write(line)
-   html.close()
+   links = [ each[1] for each in links_found ]
+   for link in links:
+       content_found   = re.search( '<a href="(.*?)">(.*)</a>', link )
+
+       if content_found:
+           url = content_found.group(1)
+           if "http" not in url[:5]:
+               url = address + url
+           paragraph = content_found.group(2)
+
+           # Cleanup the character encodings
+           paragraph = paragraph.replace('&ldquo;','"')
+           paragraph = paragraph.replace('&rdquo;','"')
+           paragraph = paragraph.replace("&lsquo;","'")
+           paragraph = paragraph.replace("&rsquo;","'")
+           paragraph = paragraph.replace("&mdash;","-")
+           paragraph = paragraph.replace("&nbsp;"," ")
+           paragraph = paragraph.replace("&amp;","&")
+
+           print( url )
+           print( paragraph )
+           print( )
 
 def get_reuters():
    """
@@ -128,4 +148,4 @@ def read_web_page( url ):
    return data
 
 if __name__ == "__main__":
-   get_reuters()
+   get_washington_post()
