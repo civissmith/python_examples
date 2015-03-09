@@ -40,7 +40,7 @@ def dump_example( yml_name ):
   Example demonstrating how to load several pieces of data into a YAML file.
   """
 
-  # Create some slush data to YAML file.
+  # Create some slush data to put in the YAML file.
 
   # A single basic type.
   foo = "bar"
