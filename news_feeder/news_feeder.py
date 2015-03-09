@@ -37,18 +37,40 @@ def  get_washpost():
    html.close()
 
 def get_reuters():
+   """
+   Download info from Reuters.
+   """
    # With Reuters, 'topStory' or 'feature' divisions mark articles.
-   page = ur.urlopen("http://www.reuters.com/news/us")
-   data = page.readlines()
-   lines = [ each.decode('utf-8').replace('\r','') for each in data ]
-   html = open('page.html', 'w')
-   for line in lines:
-       if "topStory" in line or "feature" in line:
-           html.write(line)
-   html.close()
+   #address = "http://www.reuters.com/news/us"
+   address = "http://www.reuters.com/news/technology"
+   raw_page = read_web_page( address )
+   web_page = condense_data( raw_page )
+
+   # Search for the articles.
+   # <div class="topStory"> </p> - Article and paragraph data.
+   # <div class="feature"><h2> </p> - Article and paragraph data. Without <h2>, regex will
+   #                                  grab videos and screw up.
+   top_story_found = re.findall( r'<div class="topStory">(.*?)</p>', web_page )
+   feature_found   = re.findall( r'<div class="feature"><h2>(.*?)</p>', web_page )
+
+   if top_story_found or feature_found:
+       for link in list(top_story_found + feature_found):
+           # Separate the address and the description paragraph.
+           address_found   = re.search(r'<a href="(.*?)"\s+>', link)
+           paragraph_found = re.search(r'<p>(.*)', link)
+           if address_found and paragraph_found:
+               url = address
+               url += address_found.group(1) 
+               paragraph = paragraph_found.group(1)
+               print( url )
+               print( paragraph )
+               print( )
 
 
 def get_dailymail():
+   """
+   Download info from the Daily Mail.
+   """
 
    # Daily Mail: "articletext" denotes article block with description.
    raw_page = read_web_page("http://www.dailymail.co.uk/ushome/index.html")
@@ -105,4 +127,4 @@ def read_web_page( url ):
    return data
 
 if __name__ == "__main__":
-   get_dailymail()
+   get_reuters()
