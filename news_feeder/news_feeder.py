@@ -19,6 +19,8 @@
 ################################################################################
 import re
 import urllib.request as ur
+from bs4 import BeautifulSoup
+
 ################################################################################
 #                                 Page Readers                                 #
 ################################################################################
@@ -130,31 +132,21 @@ def get_krqe13():
    Download info from KRQE.
    """
 
-   # On the story's page the regex '<p><strong>.*</p><div>' should grab the
-   # the written paragraphs. The <p> tag is used all over the place, but the
-   # article is generally the only place where it closes right before another
-   # division.
-
    # Search for the articles.
-   # <h1 class="entry-title"> </h1> - Address and description.
    address = "http://krqe.com"
-   raw_page = read_web_page( address )
 
-   web_page = condense_data( raw_page )
+   # Get a BeautifulSoup object of the page
+   page_bs = read_web_page( address )
 
+   articles = page_bs.findAll('article', {'id':re.compile('post-\d+')})
+   for art in articles:
+      summaries = art.findAll('div', {'class':'entry-summary'})
+      if summaries:
+         print("Link: "+art.a.attrs['href'])
+         for summary in summaries:
+            print(summary.get_text().strip())
+         print()
 
-   links_found = re.findall( '<h1 class="entry-title">(.*?)</h1>', web_page )
-   
-   for link in links_found:
-       content_found = re.search( '<a href="(.*?)" rel="bookmark">(.*)</a>', link )
-
-       if content_found: 
-           url = content_found.group(1)
-           dirty_paragraph = content_found.group(2)
-           paragraph = deHTMLify( dirty_paragraph, mode="hex" )
-           print( url )
-           print( paragraph )
-           print( )
 
 ################################################################################
 #                              Utility Functions                               #
@@ -249,13 +241,13 @@ def read_web_page( url ):
    Reads the web page data and returns it uncooked.
    """
    page = ur.urlopen( url )
-   data = page.readlines()
+   data = BeautifulSoup(page)
 
-   # The data is expected to be UTF-8 encoded web data.
+   # The data returned is now a BeautifulSoup object
    return data
 
 if __name__ == "__main__":
-   get_krqe13()
-   get_washington_post()
-   get_reuters()
-   get_dailymail()
+    get_krqe13()
+#   get_washington_post()
+#   get_reuters()
+#   get_dailymail()
