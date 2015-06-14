@@ -25,40 +25,32 @@ from bs4 import BeautifulSoup
 #                                 Page Readers                                 #
 ################################################################################
 
-
 def get_washington_post():
    """
    Download info from the Washington Post.
    """
+   print("*** News from The Washington Post ***")
 
+   # The 'national' page has it's own formatting for some dumb reason.
+   # This implementation works only for the odd duck.
    address = "http://www.washingtonpost.com/national" 
-   #address = "http://www.washingtonpost.com/business/technology" 
-   raw_page = read_web_page( address )
 
-   web_page = condense_data( raw_page )
+   #address = "http://www.washingtonpost.com/business/technology" 
+
+   page_bs = read_web_page( address )
 
    # Search for the articles.
-   #<h2 class="no-left"> </h2> - Article and paragraph data.
-   #<span class="blog-headline"> </span><br/> - Blog top story
-   links_found = re.findall( '<h2 class="(no-left|headline )">(.*?)</h2>', web_page )
+   stories = page_bs.findAll('div', {'class':re.compile('story-body.*')}) 
 
-   # Assemble the headline and normal links into a single list.
-   links = [ each[1] for each in links_found ]
-   for link in links:
-       content_found   = re.search( '<a href="(.*?)">(.*)</a>', link )
-
-       if content_found:
-           url = content_found.group(1)
-           if "http" not in url[:5]:
-               url = address + url
-           dirty_paragraph = content_found.group(2)
-
-           # Cleanup the character encodings
-           paragraph = deHTMLify( dirty_paragraph, mode="names" )
-
-           print( url )
-           print( paragraph )
-           print( )
+   for story in stories:
+     headline = story.find('div', {'class','story-headline'})
+     desc     = story.find('div', {'class','story-description'})
+     if headline and desc:
+        print("Link: "+headline.h3.a.attrs['href'])
+        print(headline.h3.a.get_text())
+        print(desc.get_text())
+     print() 
+   print("*** End of News from The Washington Post ***")
 
 
 def get_reuters():
@@ -132,6 +124,7 @@ def get_krqe13():
    Download info from KRQE.
    """
 
+   print("*** News from KRQE-13 ***")
    # Search for the articles.
    address = "http://krqe.com"
 
@@ -147,99 +140,17 @@ def get_krqe13():
             print(summary.get_text().strip())
          print()
 
+   print("*** End of News from KRQE-13 ***")
 
 ################################################################################
 #                              Utility Functions                               #
 ################################################################################
-def deHTMLify( text, mode ):
-   """
-   Cleans up the HTML ASCII codes from the given text and returns a clean string.
-   """
-   html_dec_codes = {
-                      '8211' : "-",
-                      '8212' : "--",
-                      '8216' : "'",
-                      '8217' : "'",
-                      '8220' : '"',
-                      '8221' : '"',
-                    }
-   html_codes = {
-                  'ldquo': '"',
-                  'rdquo': '"',
-                  'lsquo': "'",
-                  'rsquo': "'",
-                  'mdash': "-",
-                  'nbsp' : " ",
-                  'amp'  : "&",
-               }
-
-   if mode == "hex":
-       for code in html_dec_codes:
-           char = html_dec_codes[code]
-           text = text.replace( "&#%s;" % code, char )
-       return text
-
-   if mode == "names":
-       for code in html_codes:
-           char = html_codes[code]
-           text = text.replace( "&%s;" % code, char )
-       return text
-
-# TODO: Fill out dictionaries to map these codes.
-# Source: http://www.htmlhelp.com/reference/html40/entities/special.html
-#  Character  Entity  Decimal   Hex   Rendering in Your Browser
-#                                     Entity  Decimal   Hex
-#  quotation mark = APL quote  &quot;  &#34;   &#x22;  "   "   "
-#  ampersand   &amp;   &#38;   &#x26;  &   &   &
-#  less-than sign  &lt;  &#60;   &#x3C;  <   <   <
-#  greater-than sign   &gt;  &#62;   &#x3E;  >   >   >
-#  Latin capital ligature OE   &OElig;   &#338;  &#x152;   Œ   Œ   Œ
-#  Latin small ligature oe   &oelig;   &#339;  &#x153;   œ   œ   œ
-#  Latin capital letter S with caron   &Scaron;  &#352;  &#x160;   Š   Š   Š
-#  Latin small letter s with caron   &scaron;  &#353;  &#x161;   š   š   š
-#  Latin capital letter Y with diaeresis   &Yuml;  &#376;  &#x178;   Ÿ   Ÿ   Ÿ
-#  modifier letter circumflex accent   &circ;  &#710;  &#x2C6;   ˆ   ˆ   ˆ
-#  small tilde   &tilde;   &#732;  &#x2DC;   ˜   ˜   ˜
-#  en space  &ensp;  &#8194;   &#x2002;           
-#  em space  &emsp;  &#8195;   &#x2003;           
-#  thin space  &thinsp;  &#8201;   &#x2009;           
-#  zero width non-joiner   &zwnj;  &#8204;   &#x200C;  ‌  ‌  ‌
-#  zero width joiner   &zwj;   &#8205;   &#x200D;  ‍  ‍  ‍
-#  left-to-right mark  &lrm;   &#8206;   &#x200E;  ‎  ‎  ‎
-#  right-to-left mark  &rlm;   &#8207;   &#x200F;  ‏  ‏  ‏
-#  en dash   &ndash;   &#8211;   &#x2013;  –   –   –
-#  em dash   &mdash;   &#8212;   &#x2014;  —   —   —
-#  left single quotation mark  &lsquo;   &#8216;   &#x2018;  ‘   ‘   ‘
-#  right single quotation mark   &rsquo;   &#8217;   &#x2019;  ’   ’   ’
-#  single low-9 quotation mark   &sbquo;   &#8218;   &#x201A;  ‚   ‚   ‚
-#  left double quotation mark  &ldquo;   &#8220;   &#x201C;  “   “   “
-#  right double quotation mark   &rdquo;   &#8221;   &#x201D;  ”   ”   ”
-#  double low-9 quotation mark   &bdquo;   &#8222;   &#x201E;  „   „   „
-#  dagger  &dagger;  &#8224;   &#x2020;  †   †   †
-#  double dagger   &Dagger;  &#8225;   &#x2021;  ‡   ‡   ‡
-#  per mille sign  &permil;  &#8240;   &#x2030;  ‰   ‰   ‰
-#  single left-pointing angle quotation mark   &lsaquo;  &#8249;   &#x2039;  ‹   ‹   ‹
-#  single right-pointing angle quotation mark  &rsaquo;  &#8250;   &#x203A;  ›   ›   ›
-#  euro sign   &euro;  &#8364;   &#x20AC;  €   €   €
-
-
-def condense_data( data ):
-   """
-   Takes a web page's data, decodes it, strips it and returns it as a
-   single string.
-   """
-   # Combine every line into a single string.
-   search_string = ""
-   for line in data:
-       search_string += line.decode("utf-8").strip()
-
-   return search_string
-
 
 def read_web_page( url ):
    """
    Reads the web page data and returns it uncooked.
    """
+   # TODO: page = ... can time out: TimeoutError is raised.
    page = ur.urlopen( url )
    data = BeautifulSoup(page)
 
@@ -248,6 +159,6 @@ def read_web_page( url ):
 
 if __name__ == "__main__":
     get_krqe13()
-#   get_washington_post()
+    get_washington_post()
 #   get_reuters()
 #   get_dailymail()
