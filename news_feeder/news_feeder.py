@@ -57,67 +57,33 @@ def get_reuters():
    """
    Download info from Reuters.
    """
-   # With Reuters, 'topStory' or 'feature' divisions mark articles.
-   #address = "http://www.reuters.com/news/us"
-   address = "http://www.reuters.com/news/technology"
-   raw_page = read_web_page( address )
-   web_page = condense_data( raw_page )
+   print("*** News from Reuters ***")
 
-   # Search for the articles.
-   # <div class="topStory"> </p> - Article and paragraph data.
-   # <div class="feature"><h2> </p> - Article and paragraph data. Without <h2>, regex will
-   #                                  grab videos and screw up.
-   top_story_found = re.findall( r'<div class="topStory">(.*?)</p>', web_page )
-   feature_found   = re.findall( r'<div class="feature"><h2>(.*?)</p>', web_page )
+   address = "http://www.reuters.com/news/us"
+   #address = "http://www.reuters.com/news/technology"
 
-   if top_story_found or feature_found:
-       for link in list(top_story_found + feature_found):
-           # Separate the address and the description paragraph.
-           address_found   = re.search(r'<a href="(.*?)"\s+>', link)
-           paragraph_found = re.search(r'<p>(.*)', link)
-           if address_found and paragraph_found:
-               url = address
-               url += address_found.group(1) 
-               paragraph = paragraph_found.group(1)
-               print( url )
-               print( paragraph )
-               print( )
+   page_bs = read_web_page( address )
 
 
-def get_dailymail():
-   """
-   Download info from the Daily Mail.
-   """
+   # TODO: Add support for topStory tags. On some pages they are
+   #       id=topStory, others are class=topStory
+   #       NOTE:
+   #       foo = page_bs.findAll('div', {'class':'topStory', 'id':'topStory'})
+   #       does not capture them.
+   #
 
-   # Daily Mail: "articletext" denotes article block with description.
-   address = "http://www.dailymail.co.uk"
-   raw_page = read_web_page( address )
+   # Just collect the feature articles.
+   features    = page_bs.findAll('div', {'class':'feature'})
 
-   web_page = condense_data( raw_page )
-
-   # Search for the articles.
-   links_found = re.findall( r'<div class="articletext">(.*?)</div>', web_page )
-   if links_found:
-       for link in links_found:
-           # Print the link and the description paragraph.
-           # <a href=""/> - link address
-           # <p class="refresh"></p> or <p></p> - description
-           address_found   = re.search(r'<a href="(.*?)">', link)
-           paragraph_found = re.search(r'<p class="refresh">(.*?)</p>|<p>(.*?)</p>', link)
-
-           # Only save links with descriptions.
-           if address_found and paragraph_found:
-
-               url = "http://www.dailymail.co.uk"
-               url += address_found.group(1).replace('" class="js-link-clickable','') 
-               print( url )
-
-               if paragraph_found.group(1):
-                   print( paragraph_found.group(1).replace('<span class="tag-new">NEW</span>','' )) 
-               if paragraph_found.group(2):
-                   print( paragraph_found.group(2).replace('<span class="tag-new">NEW</span>','' )) 
-               print()
-
+   for feature in features:
+      print(address + feature.h2.a.attrs['href'])
+      print(feature.h2.a.get_text())
+      try:
+         print(feature.p.get_text())
+      except AttributeError as e:
+         pass
+      print()
+   print("*** End of News from Reuters ***")
 
 def get_krqe13():
    """
@@ -160,5 +126,4 @@ def read_web_page( url ):
 if __name__ == "__main__":
     get_krqe13()
     get_washington_post()
-#   get_reuters()
-#   get_dailymail()
+    get_reuters()
